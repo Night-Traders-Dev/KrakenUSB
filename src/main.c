@@ -1,4 +1,5 @@
 #include "kraken_scheduler.h"
+#include "storage.h"
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,43 +10,6 @@
 
 /* Global Event Group */
 static EventGroupHandle_t led_event_group;
-
-/* LED Blink Task */
-void led_blink_task(void *parameters) {
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-
-    while (1) {
-        /* Wait for the LED ON bit to be set */
-        EventBits_t events = kraken_wait_for_event_bits(led_event_group, EVENT_LED_ON_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
-
-        if (events & EVENT_LED_ON_BIT) {
-            gpio_put(PICO_DEFAULT_LED_PIN, 1);
-            kraken_log("LED ON");
-            vTaskDelay(pdMS_TO_TICKS(500));
-            /* Set the LED OFF bit */
-            kraken_set_event_bits(led_event_group, EVENT_LED_OFF_BIT);
-            vTaskDelay(pdMS_TO_TICKS(5000));
-        }
-    }
-}
-
-/* Controller Task */
-void controller_task(void *parameters) {
-    while (1) {
-        /* Set the LED ON bit */
-        kraken_set_event_bits(led_event_group, EVENT_LED_ON_BIT);
-
-        /* Wait for the LED OFF bit */
-        EventBits_t events = kraken_wait_for_event_bits(led_event_group, EVENT_LED_OFF_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
-
-        if (events & EVENT_LED_OFF_BIT) {
-            gpio_put(PICO_DEFAULT_LED_PIN, 0);
-            kraken_log("LED OFF");
-            vTaskDelay(pdMS_TO_TICKS(500));
-        }
-    }
-}
 
 /* Runtime Stats Task */
 void runtime_stats_task(void *parameters) {
@@ -60,13 +24,21 @@ void runtime_stats_task(void *parameters) {
     }
 }
 
-
-
+/* Storage Task */
+void storage_task(void *parameters) {
+    // Run the storage functionality in a loop
+    while (1) {
+        storage_task(); // Call the storage task from storage.c
+        vTaskDelay(pdMS_TO_TICKS(10)); // Allow other tasks to run
+    }
+}
 
 int main(void) {
-
     /* Initialize the Kraken log system */
     kraken_log("Initializing Kraken Machine Firmware...");
+
+    /* Initialize storage functionality */
+    storage_init();
 
     /* Create the Event Group */
     led_event_group = kraken_create_event_group();
@@ -75,11 +47,8 @@ int main(void) {
     }
 
     /* Create Tasks */
-    kraken_create_task(led_blink_task, "LED Blink", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    kraken_create_task(controller_task, "Controller", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     kraken_create_task(runtime_stats_task, "Runtime Stats", configMINIMAL_STACK_SIZE * 2, NULL, tskIDLE_PRIORITY + 1, NULL);
-
-
+    kraken_create_task(storage_task, "Storage Task", configMINIMAL_STACK_SIZE * 2, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     /* Start the Scheduler */
     kraken_start_scheduler();
