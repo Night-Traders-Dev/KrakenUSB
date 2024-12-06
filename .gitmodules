@@ -1,0 +1,9 @@
+[submodule "freertos"]
+        path = freertos
+        url = https://github.com/raspberrypi/FreeRTOS-Kernel
+        branch = smp
+
+[submodule "tinyusb"]
+        path = tinyusb
+        url = https://github.com/hathach/tinyusb
+        branch = master
