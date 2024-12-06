@@ -4,17 +4,37 @@ cmake_minimum_required(VERSION 3.17)
 set(PICO_PLATFORM rp2350-arm-s)
 set(PICO_BOARD pico2)
 
-# Include TinyUSB family support
-include(${CMAKE_CURRENT_SOURCE_DIR}/tinyusb/hw/bsp/family_support.cmake)
-
-# Include FreeRTOS and Pico SDK
-include(${CMAKE_CURRENT_SOURCE_DIR}/src/include/FreeRTOS_Kernel_import.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/src/include/pico_sdk_import.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/pico_sdk_import.cmake)
 
 project(KrakenMachine C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 26)
+set(PICO_CXX_ENABLE_EXCEPTIONS 1)
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/freertos/)
+
 
 # Initialize Pico SDK
 pico_sdk_init()
+
+
+add_library(freertos_config STATIC)
+target_include_directories(freertos_config PUBLIC
+	${CMAKE_CURRENT_LIST_DIR}
+	) # The config file directory\n"
+target_compile_definitions(freertos_config
+	PUBLIC  projCOVERAGE_TEST=0
+	)
+target_link_libraries(freertos_config
+	FreeRTOS-Kernel
+	pico_stdlib
+	)
+
+# Include TinyUSB, FreeRTOS
+include(/opt/pico-sdk/lib/tinyusb/hw/bsp/family_support.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/tinyusb/hw/bsp/family_support.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS_Kernel_import.cmake)
+
+
 
 # Espressif-specific build system (skip if target is Espressif)
 if(FAMILY STREQUAL "espressif")
@@ -23,22 +43,20 @@ endif()
 
 # Add KrakenMachineScheduler library
 add_library(KrakenMachineScheduler
-    src/scheduler/kraken_scheduler.c
-    src/scheduler/kraken_hal.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler/kraken_scheduler.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler/kraken_hal.c
 )
 
 # Include directories for KrakenMachineScheduler
 target_include_directories(KrakenMachineScheduler PRIVATE
-    freertos
-    freertos/include
-    src
-    src/include
-    src/scheduler
-    src/usb
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
 )
 
 # Link libraries for KrakenMachineScheduler
-target_link_libraries(KrakenMachineScheduler
+target_link_libraries(KrakenMachineScheduler PRIVATE
     pico_stdlib
     pico_multicore
     FreeRTOS-Kernel
@@ -47,18 +65,18 @@ target_link_libraries(KrakenMachineScheduler
 
 # Define the main executable target
 add_executable(KrakenMachine
-    src/main.c
-    src/usb/storage.c
-    src/usb/msc_disk.c
-    src/usb/usb_descriptors.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/storage.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/msc_disk.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/usb_descriptors.c
 )
 
 # Include directories for KrakenMachine
 target_include_directories(KrakenMachine PRIVATE
-    src
-    src/include
-    src/scheduler
-    src/usb
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
 )
 
 # Link libraries to the KrakenMachine executable
