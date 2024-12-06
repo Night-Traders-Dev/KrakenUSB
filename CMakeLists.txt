@@ -29,6 +29,7 @@ target_sources(${PROJECT} PUBLIC
 
 # Example include
 target_include_directories(${PROJECT} PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
   )
 
