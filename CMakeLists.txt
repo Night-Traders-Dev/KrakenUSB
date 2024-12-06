@@ -12,29 +12,20 @@ set(CMAKE_CXX_STANDARD 26)
 set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/freertos/)
 
-
 # Initialize Pico SDK
 pico_sdk_init()
 
-
-add_library(freertos_config STATIC)
-target_include_directories(freertos_config PUBLIC
-	${CMAKE_CURRENT_LIST_DIR}
-	) # The config file directory\n"
-target_compile_definitions(freertos_config
-	PUBLIC  projCOVERAGE_TEST=0
-	)
-target_link_libraries(freertos_config
-	FreeRTOS-Kernel
-	pico_stdlib
-	)
+# Add FreeRTOSConfig header
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
+)
 
 # Include TinyUSB, FreeRTOS
 include(/opt/pico-sdk/lib/tinyusb/hw/bsp/family_support.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/tinyusb/hw/bsp/family_support.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS_Kernel_import.cmake)
-
-
 
 # Espressif-specific build system (skip if target is Espressif)
 if(FAMILY STREQUAL "espressif")
@@ -53,6 +44,7 @@ target_include_directories(KrakenMachineScheduler PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler
     ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
+    ${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
 )
 
 # Link libraries for KrakenMachineScheduler
@@ -61,6 +53,7 @@ target_link_libraries(KrakenMachineScheduler PRIVATE
     pico_multicore
     FreeRTOS-Kernel
     FreeRTOS-Kernel-Heap4
+    freertos_config
 )
 
 # Define the main executable target
@@ -77,6 +70,7 @@ target_include_directories(KrakenMachine PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scheduler
     ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
+    ${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
 )
 
 # Link libraries to the KrakenMachine executable
@@ -85,6 +79,7 @@ target_link_libraries(KrakenMachine PRIVATE
     KrakenMachineScheduler
     FreeRTOS-Kernel
     FreeRTOS-Kernel-Heap4
+    freertos_config
     tinyusb_device
     tinyusb_board
     hardware_gpio
