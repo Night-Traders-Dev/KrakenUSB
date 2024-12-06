@@ -22,14 +22,14 @@ add_executable(${PROJECT})
 
 # Example source
 target_sources(${PROJECT} PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/msc_disk.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/storage.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/msc_disk.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/usb/usb_descriptors.c
   )
 
 # Example include
 target_include_directories(${PROJECT} PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/usb
   )
 
 # Configure compilation flags and libraries for the example... see the corresponding function
